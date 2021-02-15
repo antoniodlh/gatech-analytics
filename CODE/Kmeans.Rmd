@@ -1,0 +1,69 @@
+---
+title: "Proj Kmeans"
+author: "mkhan374"
+date: "11/15/2020"
+output: html_document
+---
+
+## R Markdown
+```{r}
+##install.packages('ggplot2')
+##install.packages('dplyr')
+##install.packages("factoextra")
+library(factoextra)
+```
+
+```{r}
+suppressMessages(library(dplyr))
+setwd("D:/GT/CSE6242/Fall2020/HW3/hw3-skeleton/Q1/6242")
+
+```
+
+```{r}
+data<-read.csv("Final_Clean_data_new.csv",stringsAsFactors =FALSE)
+
+filtered_data<-data %>% select(zip,merchants_all,Non.Violent,Violent,daily_cases,daily_deaths)
+
+
+```
+
+```{r}
+filtered_data<- filtered_data %>% group_by(zip) %>%
+  summarise(total_merchants_all= sum(merchants_all),total_cases=sum(daily_cases),total_deaths=sum(daily_deaths),total_crime_nonViolent=sum(Non.Violent),total_crimeViolent=sum(Violent)) 
+
+```
+
+```{r}
+length(filtered_data$zip)
+cluster_data<-filtered_data %>% select(zip,total_merchants_all,total_cases,total_deaths,total_crime_nonViolent,total_crimeViolent)
+
+df<-scale(cluster_data[c(2,3,4,5,6)])
+
+
+```
+
+```{r}
+fviz_nbclust(df, kmeans, method = "wss") +
+geom_vline(xintercept = 3, linetype = 2)
+```
+```{r}
+km_res<-kmeans(df, 3, nstart = 25)
+```
+
+```{r}
+print(km_res)
+km_res$totss
+
+```
+```{r}
+fviz_cluster(km_res, data = df,
+             palette = c("#2E9FDF", "#00AFBB","#E7B800"), 
+             geom = "point",
+             ellipse.type = "convex", 
+             ggtheme = theme_bw()
+             )
+```
+```{r}
+data_cls<-cbind(cluster_data, cluster = km_res$cluster)
+write.csv(data_cls, file='zip_cluster_new.csv')
+```
